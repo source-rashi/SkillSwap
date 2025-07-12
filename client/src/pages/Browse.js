@@ -4,10 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import ProfileList from '../components/profile/ProfileList';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { Search, Filter, Users, Eye, EyeOff } from 'lucide-react';
+import { Search, Filter, Users, Eye, EyeOff, Megaphone } from 'lucide-react';
 
 const Browse = () => {
   const [users, setUsers] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     search: '',
@@ -25,6 +26,7 @@ const Browse = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchMessages();
   }, [filters, pagination.currentPage]);
 
   const fetchUsers = async () => {
@@ -36,22 +38,34 @@ const Browse = () => {
         ...filters
       };
       
-      // Remove empty filters
       Object.keys(params).forEach(key => {
         if (params[key] === '') delete params[key];
       });
 
       const response = await api.get('/users', { params });
-      setUsers(response.users);
+      setUsers(Array.isArray(response.users) ? response.users.filter(u => u && u.name && u.email) : []);
       setPagination({
-        currentPage: response.currentPage,
-        totalPages: response.totalPages,
-        total: response.total
+        currentPage: response.currentPage || 1,
+        totalPages: response.totalPages || 1,
+        total: response.total || 0
       });
     } catch (error) {
-      toast.error('Failed to fetch users');
+      const errorMessage = error.error || error.message || 'Failed to fetch users';
+      toast.error(errorMessage);
+      console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMessages = async () => {
+    try {
+      const response = await api.get('/admin/messages');
+      setMessages(Array.isArray(response.messages) ? response.messages : []);
+    } catch (error) {
+      const errorMessage = error.error || error.message || 'Failed to fetch platform messages';
+      toast.error(errorMessage);
+      console.error('Error fetching messages:', error);
     }
   };
 
@@ -76,19 +90,38 @@ const Browse = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center mb-12">
-          <div className="mb-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
-              <Users className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Browse <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Skills</span>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Browse Skills
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-gray-600">
             Discover talented individuals ready to share their expertise and grow together
           </p>
         </div>
+
+        {/* Platform Messages */}
+        {messages.length > 0 && (
+          <div className="mb-6">
+            {messages.map((message) => (
+              <div
+                key={message._id}
+                className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-4"
+              >
+                <div className="flex items-center">
+                  <Megaphone className="w-5 h-5 text-blue-500 mr-2" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-800">
+                      {message.title} <span className="text-xs text-blue-600">
+                        by {message.sender?.name || 'Admin'} on {new Date(message.createdAt).toLocaleDateString()}
+                      </span>
+                    </h4>
+                    <p className="text-sm text-blue-700">{message.content}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Privacy Status Indicator */}
         {user && (

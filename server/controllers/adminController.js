@@ -200,13 +200,38 @@ const sendPlatformMessage = async (req, res) => {
 
     await message.save();
 
-    // In a real app, trigger notifications (e.g., email, push)
     console.log('Platform Message Sent:', { title, content });
-
     res.json({ message: 'Platform message sent successfully', data: { title, content } });
   } catch (error) {
     console.error('Error in sendPlatformMessage:', error);
     res.status(500).json({ error: 'Failed to send platform message' });
+  }
+};
+
+const getPlatformMessages = async (req, res) => {
+  try {
+    const messages = await Message.find()
+      .populate('sender', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean()
+      .then(messages => messages.filter(msg => 
+        msg && 
+        msg.title && 
+        msg.content && 
+        msg.sender && 
+        msg.sender.name
+      ));
+
+    const response = {
+      messages
+    };
+
+    console.log('getPlatformMessages Response:', JSON.stringify(response, null, 2));
+    res.json(response);
+  } catch (error) {
+    console.error('Error in getPlatformMessages:', error);
+    res.status(500).json({ error: 'Failed to fetch platform messages' });
   }
 };
 
@@ -343,6 +368,7 @@ module.exports = {
   toggleUserStatus,
   rejectSkill,
   sendPlatformMessage,
+  getPlatformMessages,
   getAllSwapRequests,
   exportData
 };
