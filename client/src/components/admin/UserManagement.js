@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import api from '../../services/api';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { Search, UserCheck, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, UserCheck, UserX, ChevronLeft, ChevronRight, Ban, X } from 'lucide-react';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -14,6 +14,8 @@ const UserManagement = () => {
     totalPages: 1,
     total: 0,
   });
+  const [rejectSkillModal, setRejectSkillModal] = useState(null);
+  const [banUserModal, setBanUserModal] = useState(null);
   const toast = useToast();
 
   useEffect(() => {
@@ -27,11 +29,11 @@ const UserManagement = () => {
         page: pagination.currentPage,
         limit: 20,
         search,
-        status: statusFilter === 'all' ? '' : statusFilter,
+        status: statusFilter,
       };
 
       const response = await api.get('/admin/users', { params });
-      console.log('Users API Response:', response); // Debug
+      console.log('Users API Response:', response);
       setUsers(Array.isArray(response.users) ? response.users.filter(user => user && user._id && user.name && user.email) : []);
       setPagination({
         currentPage: response.currentPage || 1,
@@ -56,6 +58,32 @@ const UserManagement = () => {
       const errorMessage = error.error || error.message || 'Failed to update user status';
       toast.error(errorMessage);
       console.error('Error toggling user status:', error);
+    }
+  };
+
+  const handleBanUser = async (userId, banReason) => {
+    try {
+      await api.put(`/admin/users/${userId}/status`, { isBanned: true, banReason });
+      toast.success('User banned successfully');
+      setBanUserModal(null);
+      fetchUsers();
+    } catch (error) {
+      const errorMessage = error.error || error.message || 'Failed to ban user';
+      toast.error(errorMessage);
+      console.error('Error banning user:', error);
+    }
+  };
+
+  const handleRejectSkill = async (userId, skill, type) => {
+    try {
+      await api.post('/admin/users/skills/reject', { id: userId, skill, type });
+      toast.success(`Skill "${skill}" rejected successfully`);
+      setRejectSkillModal(null);
+      fetchUsers();
+    } catch (error) {
+      const errorMessage = error.error || error.message || 'Failed to reject skill';
+      toast.error(errorMessage);
+      console.error('Error rejecting skill:', error);
     }
   };
 
@@ -94,7 +122,7 @@ const UserManagement = () => {
               Status Filter
             </label>
             <div className="flex space-x-2">
-              {['all', 'active', 'inactive'].map((status) => (
+              {['all', 'active', 'inactive', 'banned'].map((status) => (
                 <button
                   key={status}
                   onClick={() => handleStatusFilterChange(status)}
@@ -169,6 +197,11 @@ const UserManagement = () => {
                             <div className="text-sm text-gray-500">
                               {user.email || 'No email'}
                             </div>
+                            {user.isBanned && (
+                              <div className="text-xs text-red-600">
+                                Banned: {user.banReason || 'No reason provided'}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -176,46 +209,90 @@ const UserManagement = () => {
                         <div className="text-sm text-gray-900">
                           <div className="mb-1">
                             <span className="text-xs text-gray-500">Offers: </span>
-                            {user.skillsOffered?.length || 0} skills
+                            {(user.skillsOffered || []).map(skill => (
+                              <span key={skill} className="inline-block mr-2">
+                                {skill}
+                                <button
+                                  onClick={() => setRejectSkillModal({ userId: user._id, skill, type: 'offered' })}
+                                  className="ml-1 text-red-600 hover:text-red-800"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </span>
+                            ))}
                           </div>
                           <div>
                             <span className="text-xs text-gray-500">Wants: </span>
-                            {user.skillsWanted?.length || 0} skills
+                            {(user.skillsWanted || []).map(skill => (
+                              <span key={skill} className="inline-block mr-2">
+                                {skill}
+                                <button
+                                  onClick={() => setRejectSkillModal({ userId: user._id, skill, type: 'wanted' })}
+                                  className="ml-1 text-red-600 hover:text-red-800"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </span>
+                            ))}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            user.isActive
+                            user.isBanned
+                              ? 'bg-red-100 text-red-800'
+                              : user.isActive
                               ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
                           }`}
                         >
-                          {user.isActive ? 'Active' : 'Inactive'}
+                          {user.isBanned ? 'Banned' : user.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {!user.isBanned && (
+                          <button
+                            onClick={() => handleToggleUserStatus(user._id, user.isActive)}
+                            className={`inline-flex items-center px-3 py-1 rounded-md text-sm mr-2 ${
+                              user.isActive
+                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
+                          >
+                            {user.isActive ? (
+                              <>
+                                <UserX className="w-4 h-4 mr-1" />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="w-4 h-4 mr-1" />
+                                Activate
+                              </>
+                            )}
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleToggleUserStatus(user._id, user.isActive)}
+                          onClick={() => setBanUserModal({ userId: user._id, isBanned: user.isBanned })}
                           className={`inline-flex items-center px-3 py-1 rounded-md text-sm ${
-                            user.isActive
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            user.isBanned
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-red-100 text-red-700 hover:bg-red-200'
                           }`}
                         >
-                          {user.isActive ? (
+                          {user.isBanned ? (
                             <>
-                              <UserX className="w-4 h-4 mr-1" />
-                              Deactivate
+                              <UserCheck className="w-4 h-4 mr-1" />
+                              Unban
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-4 h-4 mr-1" />
-                              Activate
+                              <Ban className="w-4 h-4 mr-1" />
+                              Ban
                             </>
                           )}
                         </button>
@@ -269,6 +346,66 @@ const UserManagement = () => {
           </div>
         )}
       </div>
+
+      {rejectSkillModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Reject Skill</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to reject the skill "{rejectSkillModal.skill}" from {rejectSkillModal.type} skills?
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setRejectSkillModal(null)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleRejectSkill(rejectSkillModal.userId, rejectSkillModal.skill, rejectSkillModal.type)}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {banUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">{banUserModal.isBanned ? 'Unban User' : 'Ban User'}</h3>
+            {!banUserModal.isBanned && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ban Reason</label>
+                <input
+                  type="text"
+                  placeholder="Enter ban reason..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => setBanUserModal({ ...banUserModal, banReason: e.target.value })}
+                />
+              </div>
+            )}
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setBanUserModal(null)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleBanUser(banUserModal.userId, banUserModal.banReason)}
+                className={`px-4 py-2 rounded-md text-white ${
+                  banUserModal.isBanned ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {banUserModal.isBanned ? 'Unban' : 'Ban'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

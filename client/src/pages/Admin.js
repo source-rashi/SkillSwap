@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import AdminDashboard from '../components/admin/AdminDashboard';
 import UserManagement from '../components/admin/UserManagement';
 import SwapMonitoring from '../components/admin/SwapMonitoring';
-import { BarChart3, Users, MessageSquare } from 'lucide-react';
+import Messages from '../components/admin/Messages';
+import { BarChart3, Users, MessageSquare, Megaphone } from 'lucide-react';
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -10,7 +11,8 @@ const Admin = () => {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'users', label: 'Users', icon: Users },
-    { id: 'swaps', label: 'Swaps', icon: MessageSquare }
+    { id: 'swaps', label: 'Swaps', icon: MessageSquare },
+    { id: 'messages', label: 'Messages', icon: Megaphone }
   ];
 
   const renderContent = () => {
@@ -21,6 +23,8 @@ const Admin = () => {
         return <UserManagement />;
       case 'swaps':
         return <SwapMonitoring />;
+      case 'messages':
+        return <Messages />;
       default:
         return <AdminDashboard />;
     }
@@ -33,11 +37,10 @@ const Admin = () => {
           Admin Dashboard
         </h1>
         <p className="text-gray-600">
-          Manage users, monitor swaps, and view platform analytics
+          Manage users, monitor swaps, send messages, and view platform analytics
         </p>
       </div>
 
-      {/* Tabs */}
       <div className="border-b border-gray-200 mb-8">
         <nav className="-mb-px flex space-x-8">
           {tabs.map((tab) => {
@@ -60,7 +63,6 @@ const Admin = () => {
         </nav>
       </div>
 
-      {/* Content */}
       {renderContent()}
     </div>
   );
