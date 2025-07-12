@@ -2,7 +2,7 @@
 
 ## 🧠 Overview
 
-**Skill Swap** is a full-stack web application designed to build a community where people exchange knowledge instead of currency. From learning Photoshop to teaching Yoga — the platform connects passionate learners with willing teachers.
+**Skill Swap** is a full-stack web application designed to build a community to exchange the skill. 
 
 Whether you want to **offer** a skill, **request** one, or **redeem** points for learning — it all happens in a secure, user-friendly environment designed for growth.
 
@@ -73,23 +73,6 @@ Whether you want to **offer** a skill, **request** one, or **redeem** points for
 - **Authentication:** JWT
 - **Other Tools:** WebSockets, REST APIs
 
----
-
-## 🚀 Installation & Setup
-
-
-### Clone the repository
-git clone https://github.com/pankajydv07/skill-swap-platform
-
-### Navigate to the project
-cd skill-swap
-
-### Install dependencies
-npm install
-
-### Start the development server
-npm start
-
  ---
 ## Mockup link
 
@@ -101,10 +84,10 @@ npm start
 
 ## 👨‍💻 Team – *Comet*
 
-- 👩‍💻 member 1: Rashi agrawal
-- 👨‍💻 Member 2: Ujjwal panday
-- 👩‍💻 Member 3: Humairah shaik
-- 👨‍💻 Member 4: Pankaj yadav
+- 👩‍💻 member 1: Rashi Agrawal
+- 👨‍💻 Member 2: Ujjawal Panday
+- 👩‍💻 Member 3: Humairah Shaik
+- 👨‍💻 Member 4: Pankaj Yadav
 
 > *We believe in building collaborative tools that create real impact.*
 
