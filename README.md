@@ -73,24 +73,8 @@ Whether you want to **offer** a skill, **request** one, or **redeem** points for
 - **Authentication:** JWT
 - **Other Tools:** WebSockets, REST APIs
 
+
 ---
-
-## 🚀 Installation & Setup
-
-
-### Clone the repository
-git clone https://github.com/pankajydv07/skill-swap-platform
-
-### Navigate to the project
-cd skill-swap-platform
-
-### Install dependencies
-npm install
-
-### Start the development server
-npm start
-
- ---
 ## Mockup link
 
 🔗 https://app.excalidraw.com/l/65VNwvy7c4X/8bM86GXnnUN
