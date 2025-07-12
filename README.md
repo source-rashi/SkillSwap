@@ -82,7 +82,7 @@ Whether you want to **offer** a skill, **request** one, or **redeem** points for
 git clone https://github.com/pankajydv07/skill-swap-platform
 
 ### Navigate to the project
-cd skill-swap
+cd skill-swap-platform
 
 ### Install dependencies
 npm install
