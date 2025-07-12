@@ -4,16 +4,21 @@ const User = require('../models/User');
 
 const createSwapRequest = async (req, res) => {
   try {
+    console.log('📨 Creating swap request with data:', req.body);
+    console.log('👤 User making request:', req.user._id);
+    
     const { recipient, skillOffered, skillRequested, message, scheduledDate } = req.body;
 
     // Check if recipient exists and is active
     const recipientUser = await User.findById(recipient);
     if (!recipientUser || !recipientUser.isActive) {
+      console.log('❌ Recipient not found or inactive:', recipient);
       return res.status(404).json({ error: 'Recipient not found' });
     }
 
     // Prevent self-requests
     if (req.user._id.toString() === recipient) {
+      console.log('❌ Self-request attempt');
       return res.status(400).json({ error: 'Cannot send swap request to yourself' });
     }
 
@@ -26,6 +31,7 @@ const createSwapRequest = async (req, res) => {
     });
 
     if (existingRequest) {
+      console.log('❌ Existing pending request found');
       return res.status(400).json({ error: 'Pending request already exists for this skill' });
     }
 
@@ -39,13 +45,21 @@ const createSwapRequest = async (req, res) => {
     });
 
     await swapRequest.save();
-    await swapRequest.populate(['requester', 'recipient'], 'name email skillsOffered skillsWanted');
+    console.log('✅ Swap request saved successfully');
+    
+    await swapRequest.populate([
+      { path: 'requester', select: 'name email skillsOffered skillsWanted' },
+      { path: 'recipient', select: 'name email skillsOffered skillsWanted' }
+    ]);
+    console.log('✅ Swap request populated successfully');
 
     res.status(201).json({
       message: 'Swap request sent successfully',
       swapRequest
     });
+    console.log('✅ Response sent successfully');
   } catch (error) {
+    console.error('💥 Error in createSwapRequest:', error);
     res.status(500).json({ error: 'Failed to create swap request' });
   }
 };
