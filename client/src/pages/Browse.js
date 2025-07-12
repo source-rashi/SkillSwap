@@ -4,11 +4,15 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import ProfileList from '../components/profile/ProfileList';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { Search, Filter, Users, Eye, EyeOff, Megaphone } from 'lucide-react';
+import { Search, Filter, Users, Eye, EyeOff, Megaphone, X } from 'lucide-react';
 
 const Browse = () => {
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [dismissedMessages, setDismissedMessages] = useState(() => {
+    const saved = localStorage.getItem('dismissedMessages');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     search: '',
@@ -28,6 +32,10 @@ const Browse = () => {
     fetchUsers();
     fetchMessages();
   }, [filters, pagination.currentPage]);
+
+  useEffect(() => {
+    localStorage.setItem('dismissedMessages', JSON.stringify(dismissedMessages));
+  }, [dismissedMessages]);
 
   const fetchUsers = async () => {
     try {
@@ -69,6 +77,10 @@ const Browse = () => {
     }
   };
 
+  const handleDismissMessage = (messageId) => {
+    setDismissedMessages(prev => [...prev, messageId]);
+  };
+
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setPagination(prev => ({ ...prev, currentPage: 1 }));
@@ -89,7 +101,26 @@ const Browse = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+        {/* Privacy Status Notification */}
+        {user && (
+          <div className="absolute top-4 right-4 max-w-sm p-3 bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              {user.isPublic ? (
+                <>
+                  <Eye className="w-4 h-4 text-blue-600 mr-2" />
+                  <span className="text-sm font-medium text-blue-800">Profile: Public</span>
+                </>
+              ) : (
+                <>
+                  <EyeOff className="w-4 h-4 text-blue-600 mr-2" />
+                  <span className="text-sm font-medium text-blue-800">Profile: Private</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
             Browse Skills
@@ -102,49 +133,33 @@ const Browse = () => {
         {/* Platform Messages */}
         {messages.length > 0 && (
           <div className="mb-6">
-            {messages.map((message) => (
-              <div
-                key={message._id}
-                className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-4"
-              >
-                <div className="flex items-center">
-                  <Megaphone className="w-5 h-5 text-blue-500 mr-2" />
-                  <div>
-                    <h4 className="text-sm font-semibold text-blue-800">
-                      {message.title} <span className="text-xs text-blue-600">
-                        by {message.sender?.name || 'Admin'} on {new Date(message.createdAt).toLocaleDateString()}
-                      </span>
-                    </h4>
-                    <p className="text-sm text-blue-700">{message.content}</p>
+            {messages
+              .filter(message => !dismissedMessages.includes(message._id))
+              .map((message) => (
+                <div
+                  key={message._id}
+                  className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-4 relative"
+                >
+                  <button
+                    onClick={() => handleDismissMessage(message._id)}
+                    className="absolute top-2 right-2 text-blue-600 hover:text-blue-800"
+                    aria-label="Dismiss message"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                  <div className="flex items-center">
+                    <Megaphone className="w-5 h-5 text-blue-500 mr-2" />
+                    <div>
+                      <h4 className="text-sm font-semibold text-blue-800">
+                        {message.title} <span className="text-xs text-blue-600">
+                          by {message.sender?.name || 'Admin'} on {new Date(message.createdAt).toLocaleDateString()}
+                        </span>
+                      </h4>
+                      <p className="text-sm text-blue-700">{message.content}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Privacy Status Indicator */}
-        {user && (
-          <div className="mb-6">
-            <div className={`max-w-md mx-auto p-4 rounded-xl border ${
-              user.isPublic 
-                ? 'bg-green-50 border-green-200 text-green-800' 
-                : 'bg-orange-50 border-orange-200 text-orange-800'
-            }`}>
-              <div className="flex items-center justify-center">
-                {user.isPublic ? (
-                  <>
-                    <Eye className="w-5 h-5 mr-2" />
-                    <span className="font-medium">Your profile is public and visible to others</span>
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="w-5 h-5 mr-2" />
-                    <span className="font-medium">Your profile is private and hidden from browse results</span>
-                  </>
-                )}
-              </div>
-            </div>
+              ))}
           </div>
         )}
 
