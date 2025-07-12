@@ -6,6 +6,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "axios": "^1.5.0",
+    "cloudinary-react": "^1.8.1",
     "date-fns": "^2.30.0",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",

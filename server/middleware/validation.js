@@ -34,7 +34,8 @@ const validateProfile = (req, res, next) => {
     skillsOffered: Joi.array().items(Joi.string().max(50)),
     skillsWanted: Joi.array().items(Joi.string().max(50)),
     availability: Joi.string().valid('weekdays', 'weekends', 'evenings', 'flexible'),
-    isPublic: Joi.boolean()
+    isPublic: Joi.boolean(),
+    profileImage: Joi.string().uri().allow('')
   });
 
   const { error } = schema.validate(req.body);

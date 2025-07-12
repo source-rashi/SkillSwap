@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema({
     enum: ['weekdays', 'weekends', 'evenings', 'flexible'],
     default: 'flexible'
   },
+  profileImage: {
+    type: String,
+    trim: true
+  },
   isPublic: {
     type: Boolean,
     default: true

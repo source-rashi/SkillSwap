@@ -4,14 +4,21 @@ const axios = require('axios');
 const updateProfile = async (req, res) => {
   try {
     const updates = req.body;
+    console.log('Received profile update request:');
+    console.log('User ID:', req.user._id);
+    console.log('Updates:', JSON.stringify(updates, null, 2));
+    console.log('Profile Image in updates:', updates.profileImage);
+    
     const user = await User.findByIdAndUpdate(
       req.user._id,
       updates,
       { new: true, runValidators: true }
     );
     
+    console.log('Updated user profile image:', user.profileImage);
     res.json({ message: 'Profile updated successfully', user });
   } catch (error) {
+    console.error('Profile update error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
   }
 };

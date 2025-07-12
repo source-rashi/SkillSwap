@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import api from '../../services/api';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { Plus, X, MapPin, Clock, Eye, EyeOff } from 'lucide-react';
+import ImageUpload from '../common/ImageUpload';
+import { Plus, X, MapPin, Clock, Eye, EyeOff, User } from 'lucide-react';
 
 const ProfileForm = () => {
   const { user, updateUser } = useAuth();
@@ -15,8 +16,7 @@ const ProfileForm = () => {
   const [newSkillOffered, setNewSkillOffered] = useState('');
   const [newSkillWanted, setNewSkillWanted] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState([]);
-  const [profilePicture, setProfilePicture] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(user?.profilePicture || '');
+  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
 
   const {
     register,
@@ -36,7 +36,7 @@ const ProfileForm = () => {
       setValue('isPublic', user.isPublic !== false);
       setSkillsOffered(user.skillsOffered || []);
       setSkillsWanted(user.skillsWanted || []);
-      setPreviewUrl(user.profilePicture || '');
+      setProfileImage(user.profileImage || '');
     }
   }, [user, setValue]);
 
@@ -101,68 +101,71 @@ const ProfileForm = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('location', data.location);
-      formData.append('availability', data.availability);
-      formData.append('isPublic', data.isPublic);
-      formData.append('skillsOffered', JSON.stringify(skillsOffered));
-      formData.append('skillsWanted', JSON.stringify(skillsWanted));
-      if (profilePicture) {
-        formData.append('profilePicture', profilePicture);
-      }
+      const updateData = {
+        name: data.name,
+        location: data.location,
+        availability: data.availability,
+        isPublic: data.isPublic,
+        skillsOffered,
+        skillsWanted,
+        profileImage
+      };
 
-      const response = await api.put('/users/profile', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      console.log('Submitting profile update with data:', updateData);
+      console.log('Profile image URL:', profileImage);
+
+      const response = await api.put('/users/profile', updateData);
       updateUser(response.user);
       toast.success('Profile updated successfully!');
     } catch (error) {
+      console.error('Profile update error:', error);
       toast.error(error.error || 'Failed to update profile');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleImageUpload = (imageUrl) => {
+    console.log('Image uploaded, URL:', imageUrl);
+    setProfileImage(imageUrl);
+    
+    // Also save the profileImage to the database immediately
+    saveProfileImageToDatabase(imageUrl);
+  };
+
+  const saveProfileImageToDatabase = async (imageUrl) => {
+    try {
+      console.log('Saving profile image to database:', imageUrl);
+      const response = await api.put('/users/profile', { profileImage: imageUrl });
+      console.log('Profile image saved to database, response:', response);
+      updateUser(response.user);
+      toast.success('Profile picture updated!');
+    } catch (error) {
+      console.error('Failed to save profile image:', error);
+      toast.error('Failed to save profile picture');
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Profile Picture */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Profile Picture
-        </label>
-        <div className="flex items-center space-x-4">
-          <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-            {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Profile preview"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-gray-400">No Image</span>
-            )}
-          </div>
-          <div>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/gif"
-              onChange={handleProfilePictureChange}
-              className="block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-md file:border-0
-                file:text-sm file:font-semibold
-                file:bg-blue-50 file:text-blue-700
-                hover:file:bg-blue-100"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              JPEG, PNG, or GIF (Max 5MB)
-            </p>
-          </div>
+    <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-2xl">
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl mb-4">
+          <User className="w-6 h-6 text-white" />
         </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Edit Profile</h2>
+        <p className="text-gray-600">Update your information and skills</p>
       </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        {/* Profile Image */}
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Picture</h3>
+          <ImageUpload
+            currentImage={profileImage}
+            onImageUpload={handleImageUpload}
+            className="mx-auto"
+          />
+        </div>
 
       {/* Basic Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -338,6 +341,7 @@ const ProfileForm = () => {
         </button>
       </div>
     </form>
+    </div>
   );
 };
 

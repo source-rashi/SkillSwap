@@ -101,6 +101,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (userData) => {
+    console.log('Updating user context with:', userData);
+    console.log('Current user before update:', state.user);
     dispatch({ type: 'UPDATE_USER', payload: userData });
   };
 
