@@ -101,10 +101,10 @@ npm start
 
 ## 👨‍💻 Team – *Comet*
 
-- 👩‍💻 member 1: Rashi agrawal
-- 👨‍💻 Member 2: Ujjwal panday
-- 👩‍💻 Member 3: Humairah shaik
-- 👨‍💻 Member 4: Pankaj yadav
+- 👩‍💻 member 1: Rashi Agrawal
+- 👨‍💻 Member 2: Ujjawal Panday
+- 👩‍💻 Member 3: Humairah Shaik
+- 👨‍💻 Member 4: Pankaj Yadav
 
 > *We believe in building collaborative tools that create real impact.*
 
