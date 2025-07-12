@@ -171,30 +171,33 @@ const Community = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar - Filters */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8">
-              <PostFilters
-                filters={filters}
-                onFilterChange={handleFilterChange}
-              />
-            </div>
+        {/* Filters - Full Width Horizontal Layout */}
+        <PostFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={() => setFilters({
+            type: '',
+            category: '',
+            search: '',
+            sortBy: 'createdAt',
+            sortOrder: 'desc'
+          })}
+        />
+
+        {/* Main Content */}
+        <div className="max-w-4xl mx-auto">
+          {/* Create Post Button */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-6">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium"
+            >
+              <Plus className="w-5 h-5" />
+              Share Your Knowledge
+            </button>
           </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {/* Create Post Button */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-6">
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium"
-              >
-                <Plus className="w-5 h-5" />
-                Share Your Knowledge
-              </button>
-            </div>
-
+          <div>
             {/* Posts List */}
             {isLoading ? (
               <div className="flex justify-center py-12">
