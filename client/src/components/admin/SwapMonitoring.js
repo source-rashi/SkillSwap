@@ -12,7 +12,7 @@ const SwapMonitoring = () => {
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
-    total: 0
+    total: 0,
   });
   const toast = useToast();
 
@@ -26,18 +26,21 @@ const SwapMonitoring = () => {
       const params = {
         page: pagination.currentPage,
         limit: 20,
-        status: statusFilter === 'all' ? '' : statusFilter
+        status: statusFilter === 'all' ? '' : statusFilter,
       };
 
       const response = await api.get('/admin/swaps', { params });
-      setSwaps(response.swapRequests);
+      console.log('Swaps API Response:', response); // Debug
+      setSwaps(Array.isArray(response.swapRequests) ? response.swapRequests.filter(swap => swap && swap._id && swap.requester && swap.recipient) : []);
       setPagination({
-        currentPage: response.currentPage,
-        totalPages: response.totalPages,
-        total: response.total
+        currentPage: response.currentPage || 1,
+        totalPages: response.totalPages || 1,
+        total: response.total || 0,
       });
     } catch (error) {
-      toast.error('Failed to fetch swap requests');
+      const errorMessage = error.error || error.message || 'Failed to fetch swap requests';
+      toast.error(errorMessage);
+      console.error('Error fetching swaps:', error);
     } finally {
       setLoading(false);
     }
@@ -47,12 +50,11 @@ const SwapMonitoring = () => {
     pending: 'bg-yellow-100 text-yellow-800',
     accepted: 'bg-green-100 text-green-800',
     rejected: 'bg-red-100 text-red-800',
-    completed: 'bg-blue-100 text-blue-800'
+    completed: 'bg-blue-100 text-blue-800',
   };
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -64,7 +66,7 @@ const SwapMonitoring = () => {
                 key={status}
                 onClick={() => {
                   setStatusFilter(status);
-                  setPagination(prev => ({ ...prev, currentPage: 1 }));
+                  setPagination((prev) => ({ ...prev, currentPage: 1 }));
                 }}
                 className={`px-3 py-2 rounded-md text-sm font-medium ${
                   statusFilter === status
@@ -79,7 +81,6 @@ const SwapMonitoring = () => {
         </div>
       </div>
 
-      {/* Swaps Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -114,56 +115,70 @@ const SwapMonitoring = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {swaps.map((swap) => (
-                  <tr key={swap._id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm">
-                        <div className="font-medium text-gray-900">
-                          {swap.requester.name}
-                        </div>
-                        <div className="text-gray-500">
-                          → {swap.recipient.name}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="text-blue-600 font-medium">
-                          {swap.skillOffered}
-                        </div>
-                        <div className="text-gray-500">
-                          for {swap.skillRequested}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusColors[swap.status]}`}>
-                        {swap.status.charAt(0).toUpperCase() + swap.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {format(new Date(swap.createdAt), 'MMM d, yyyy')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {format(new Date(swap.updatedAt), 'MMM d, yyyy')}
+                {swaps.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                      No swap requests found.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  swaps.map((swap) => (
+                    <tr key={swap._id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm">
+                          <div className="font-medium text-gray-900">
+                            {swap.requester?.name || 'Unknown'}
+                          </div>
+                          <div className="text-gray-500">
+                            → {swap.recipient?.name || 'Unknown'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm">
+                          <div className="text-blue-600 font-medium">
+                            {swap.skillOffered || 'N/A'}
+                          </div>
+                          <div className="text-gray-500">
+                            for {swap.skillRequested || 'N/A'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusColors[swap.status] || 'bg-gray-100 text-gray-800'}`}>
+                          {swap.status ? (swap.status.charAt(0).toUpperCase() + swap.status.slice(1)) : 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {swap.createdAt ? format(new Date(swap.createdAt), 'MMM d, yyyy') : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {swap.updatedAt ? format(new Date(swap.updatedAt), 'MMM d, yyyy') : 'N/A'}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         )}
 
-        {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Showing {((pagination.currentPage - 1) * 20) + 1} to {Math.min(pagination.currentPage * 20, pagination.total)} of {pagination.total} results
+                Showing {((pagination.currentPage - 1) * 20) + 1} to{' '}
+                {Math.min(pagination.currentPage * 20, pagination.total)} of{' '}
+                {pagination.total} results
               </div>
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      currentPage: prev.currentPage - 1,
+                    }))
+                  }
                   disabled={pagination.currentPage === 1}
                   className="p-2 rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -173,7 +188,12 @@ const SwapMonitoring = () => {
                   Page {pagination.currentPage} of {pagination.totalPages}
                 </span>
                 <button
-                  onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      currentPage: prev.currentPage + 1,
+                    }))
+                  }
                   disabled={pagination.currentPage === pagination.totalPages}
                   className="p-2 rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

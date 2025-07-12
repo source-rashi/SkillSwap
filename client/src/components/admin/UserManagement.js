@@ -12,7 +12,7 @@ const UserManagement = () => {
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
-    total: 0
+    total: 0,
   });
   const toast = useToast();
 
@@ -27,18 +27,21 @@ const UserManagement = () => {
         page: pagination.currentPage,
         limit: 20,
         search,
-        status: statusFilter === 'all' ? '' : statusFilter
+        status: statusFilter === 'all' ? '' : statusFilter,
       };
 
       const response = await api.get('/admin/users', { params });
-      setUsers(response.users);
+      console.log('Users API Response:', response); // Debug
+      setUsers(Array.isArray(response.users) ? response.users.filter(user => user && user._id && user.name && user.email) : []);
       setPagination({
-        currentPage: response.currentPage,
-        totalPages: response.totalPages,
-        total: response.total
+        currentPage: response.currentPage || 1,
+        totalPages: response.totalPages || 1,
+        total: response.total || 0,
       });
     } catch (error) {
-      toast.error('Failed to fetch users');
+      const errorMessage = error.error || error.message || 'Failed to fetch users';
+      toast.error(errorMessage);
+      console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
     }
@@ -46,27 +49,28 @@ const UserManagement = () => {
 
   const handleToggleUserStatus = async (userId, isActive) => {
     try {
-      await api.put(`/admin/users/${userId}/status`, { isActive });
-      toast.success(`User ${isActive ? 'activated' : 'deactivated'} successfully`);
+      await api.put(`/admin/users/${userId}/status`, { isActive: !isActive });
+      toast.success(`User ${isActive ? 'deactivated' : 'activated'} successfully`);
       fetchUsers();
     } catch (error) {
-      toast.error(error.error || 'Failed to update user status');
+      const errorMessage = error.error || error.message || 'Failed to update user status';
+      toast.error(errorMessage);
+      console.error('Error toggling user status:', error);
     }
   };
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
 
   const handleStatusFilterChange = (status) => {
     setStatusFilter(status);
-    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -108,7 +112,6 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* Users Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -143,88 +146,104 @@ const UserManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
-                  <tr key={user._id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold">
-                            {user.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {user.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {user.email}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        <div className="mb-1">
-                          <span className="text-xs text-gray-500">Offers: </span>
-                          {user.skillsOffered?.length || 0} skills
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">Wants: </span>
-                          {user.skillsWanted?.length || 0} skills
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {user.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleToggleUserStatus(user._id, !user.isActive)}
-                        className={`inline-flex items-center px-3 py-1 rounded-md text-sm ${
-                          user.isActive
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
-                      >
-                        {user.isActive ? (
-                          <>
-                            <UserX className="w-4 h-4 mr-1" />
-                            Deactivate
-                          </>
-                        ) : (
-                          <>
-                            <UserCheck className="w-4 h-4 mr-1" />
-                            Activate
-                          </>
-                        )}
-                      </button>
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                      No users found.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  users.map((user) => (
+                    <tr key={user._id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 font-semibold">
+                              {user.name?.charAt(0).toUpperCase() || '?'}
+                            </span>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {user.name || 'Unknown'}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {user.email || 'No email'}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          <div className="mb-1">
+                            <span className="text-xs text-gray-500">Offers: </span>
+                            {user.skillsOffered?.length || 0} skills
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500">Wants: </span>
+                            {user.skillsWanted?.length || 0} skills
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.isActive
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {user.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => handleToggleUserStatus(user._id, user.isActive)}
+                          className={`inline-flex items-center px-3 py-1 rounded-md text-sm ${
+                            user.isActive
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          {user.isActive ? (
+                            <>
+                              <UserX className="w-4 h-4 mr-1" />
+                              Deactivate
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck className="w-4 h-4 mr-1" />
+                              Activate
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         )}
 
-        {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Showing {((pagination.currentPage - 1) * 20) + 1} to {Math.min(pagination.currentPage * 20, pagination.total)} of {pagination.total} results
+                Showing {((pagination.currentPage - 1) * 20) + 1} to{' '}
+                {Math.min(pagination.currentPage * 20, pagination.total)} of{' '}
+                {pagination.total} results
               </div>
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      currentPage: prev.currentPage - 1,
+                    }))
+                  }
                   disabled={pagination.currentPage === 1}
                   className="p-2 rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -234,7 +253,12 @@ const UserManagement = () => {
                   Page {pagination.currentPage} of {pagination.totalPages}
                 </span>
                 <button
-                  onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      currentPage: prev.currentPage + 1,
+                    }))
+                  }
                   disabled={pagination.currentPage === pagination.totalPages}
                   className="p-2 rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

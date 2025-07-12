@@ -13,25 +13,42 @@ const getDashboardStats = async (req, res) => {
     const recentUsers = await User.find({ isActive: true })
       .select('name email createdAt')
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(5)
+      .lean()
+      .then(users => users.filter(user => user && user.name && user.email));
 
     const recentSwaps = await SwapRequest.find()
-      .populate('requester recipient', 'name email')
+      .populate('requester', 'name email')
+      .populate('recipient', 'name email')
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(5)
+      .lean()
+      .then(swaps => swaps.filter(swap => 
+        swap && 
+        swap.requester && 
+        swap.recipient && 
+        swap.requester.name && 
+        swap.recipient.name && 
+        swap.skillOffered && 
+        swap.skillRequested
+      ));
 
-    res.json({
+    const response = {
       stats: {
         totalUsers,
         totalSwaps,
         completedSwaps,
         pendingSwaps,
-        completionRate: totalSwaps > 0 ? (completedSwaps / totalSwaps * 100).toFixed(1) : 0
+        completionRate: totalSwaps > 0 ? Number((completedSwaps / totalSwaps * 100).toFixed(1)) : 0
       },
       recentUsers,
       recentSwaps
-    });
+    };
+
+    console.log('getDashboardStats Response:', JSON.stringify(response, null, 2)); // Debug
+    res.json(response);
   } catch (error) {
+    console.error('Error in getDashboardStats:', error);
     res.status(500).json({ error: 'Failed to fetch dashboard stats' });
   }
 };
@@ -48,25 +65,31 @@ const getAllUsers = async (req, res) => {
       ];
     }
 
-    if (status) {
+    if (status && status !== 'all') {
       query.isActive = status === 'active';
     }
 
     const users = await User.find(query)
-      .select('-password')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .sort({ createdAt: -1 });
+      .select('name email createdAt isActive skillsOffered skillsWanted')
+      .limit(Number(limit))
+      .skip((Number(page) - 1) * Number(limit))
+      .sort({ createdAt: -1 })
+      .lean()
+      .then(users => users.filter(user => user && user.name && user.email));
 
     const total = await User.countDocuments(query);
 
-    res.json({
+    const response = {
       users,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      totalPages: Math.ceil(total / Number(limit)),
+      currentPage: Number(page),
       total
-    });
+    };
+
+    console.log('getAllUsers Response:', JSON.stringify(response, null, 2)); // Debug
+    res.json(response);
   } catch (error) {
+    console.error('Error in getAllUsers:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 };
@@ -89,11 +112,21 @@ const toggleUserStatus = async (req, res) => {
     user.isActive = isActive;
     await user.save();
 
-    res.json({
+    const response = {
       message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
-      user
-    });
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isActive: user.isActive,
+        createdAt: user.createdAt
+      }
+    };
+
+    console.log('toggleUserStatus Response:', JSON.stringify(response, null, 2)); // Debug
+    res.json(response);
   } catch (error) {
+    console.error('Error in toggleUserStatus:', error);
     res.status(500).json({ error: 'Failed to update user status' });
   }
 };
@@ -103,25 +136,40 @@ const getAllSwapRequests = async (req, res) => {
     const { page = 1, limit = 20, status } = req.query;
 
     const query = {};
-    if (status) {
+    if (status && status !== 'all') {
       query.status = status;
     }
 
     const swapRequests = await SwapRequest.find(query)
-      .populate('requester recipient', 'name email')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .sort({ createdAt: -1 });
+      .populate('requester', 'name email')
+      .populate('recipient', 'name email')
+      .limit(Number(limit))
+      .skip((Number(page) - 1) * Number(limit))
+      .sort({ createdAt: -1 })
+      .lean()
+      .then(swaps => swaps.filter(swap => 
+        swap && 
+        swap.requester && 
+        swap.recipient && 
+        swap.requester.name && 
+        swap.recipient.name && 
+        swap.skillOffered && 
+        swap.skillRequested
+      ));
 
     const total = await SwapRequest.countDocuments(query);
 
-    res.json({
+    const response = {
       swapRequests,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      totalPages: Math.ceil(total / Number(limit)),
+      currentPage: Number(page),
       total
-    });
+    };
+
+    console.log('getAllSwapRequests Response:', JSON.stringify(response, null, 2)); // Debug
+    res.json(response);
   } catch (error) {
+    console.error('Error in getAllSwapRequests:', error);
     res.status(500).json({ error: 'Failed to fetch swap requests' });
   }
 };
@@ -135,15 +183,37 @@ const exportData = async (req, res) => {
 
     switch (type) {
       case 'users':
-        data = await User.find({ isActive: true }).select('-password');
+        data = await User.find({ isActive: true })
+          .select('name email createdAt isActive skillsOffered skillsWanted')
+          .lean()
+          .then(users => users.filter(user => user && user.name && user.email));
         filename = `users_export_${Date.now()}`;
         break;
       case 'swaps':
-        data = await SwapRequest.find().populate('requester recipient', 'name email');
+        data = await SwapRequest.find()
+          .populate('requester', 'name email')
+          .populate('recipient', 'name email')
+          .lean()
+          .then(swaps => swaps.filter(swap => 
+            swap && 
+            swap.requester && 
+            swap.recipient && 
+            swap.requester.name && 
+            swap.recipient.name
+          ));
         filename = `swaps_export_${Date.now()}`;
         break;
       case 'feedback':
-        data = await Feedback.find().populate('reviewer reviewee', 'name email');
+        data = await Feedback.find()
+          .populate('reviewer reviewee', 'name email')
+          .lean()
+          .then(feedback => feedback.filter(fb => 
+            fb && 
+            fb.reviewer && 
+            fb.reviewee && 
+            fb.reviewer.name && 
+            fb.reviewee.name
+          ));
         filename = `feedback_export_${Date.now()}`;
         break;
       default:
@@ -151,7 +221,6 @@ const exportData = async (req, res) => {
     }
 
     if (format === 'csv') {
-      // Simple CSV conversion (you might want to use a proper CSV library)
       const csv = convertToCSV(data);
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`);
@@ -162,6 +231,7 @@ const exportData = async (req, res) => {
       res.json(data);
     }
   } catch (error) {
+    console.error('Error in exportData:', error);
     res.status(500).json({ error: 'Failed to export data' });
   }
 };
@@ -170,13 +240,18 @@ const exportData = async (req, res) => {
 const convertToCSV = (data) => {
   if (!data.length) return '';
   
-  const headers = Object.keys(data[0]);
+  const headers = Object.keys(data[0]).filter(header => 
+    header !== '__v' && header !== 'password' && header !== '_id'
+  );
   const csvRows = [headers.join(',')];
   
   for (const row of data) {
     const values = headers.map(header => {
-      const value = row[header];
-      return typeof value === 'string' ? `"${value}"` : value;
+      let value = row[header];
+      if (typeof value === 'object' && value) {
+        value = JSON.stringify(value).replace(/"/g, '""');
+      }
+      return typeof value === 'string' ? `"${value}"` : value || '';
     });
     csvRows.push(values.join(','));
   }
