@@ -40,7 +40,7 @@ const Community = () => {
       });
 
       const response = await api.get(`/posts?${queryParams}`);
-      setPosts(response.posts);
+      setPosts(Array.isArray(response.posts) ? response.posts : []);
     } catch (error) {
       toast.error('Failed to fetch posts');
       console.error('Fetch posts error:', error);
@@ -51,11 +51,12 @@ const Community = () => {
 
   const fetchStats = async () => {
     try {
-      // You can create a separate endpoint for community stats
       const response = await api.get('/posts?limit=1');
       setStats(prevStats => ({
         ...prevStats,
-        totalPosts: response.total
+        totalPosts: response.total || 0,
+        totalUsers: response.totalUsers || 0,
+        totalComments: response.totalComments || 0
       }));
     } catch (error) {
       console.error('Fetch stats error:', error);
@@ -120,80 +121,86 @@ const Community = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
-            <Users className="w-8 h-8 text-white" />
+        <div className="mb-8">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl">
+              <Users className="w-6 h-6 text-white transform hover:scale-110 transition-transform duration-300" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Community Hub</h1>
+              <p className="text-base text-gray-600">
+                Share insights, ask questions, and connect with fellow learners
+              </p>
+            </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Community Hub</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Share insights, ask questions, and connect with fellow learners
-          </p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-blue-200 hover:shadow-md hover:scale-105 transition-all duration-300">
             <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <MessageSquare className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <MessageSquare className="w-4 h-4 text-blue-600 transform hover:scale-110 transition-transform duration-300" />
               </div>
-              <div className="ml-4">
-                <h3 className="text-2xl font-bold text-gray-900">{stats.totalPosts}</h3>
-                <p className="text-gray-600">Community Posts</p>
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-gray-900">{stats.totalPosts}</h3>
+                <p className="text-sm text-gray-600">Community Posts</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-blue-200 hover:shadow-md hover:scale-105 transition-all duration-300">
             <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-xl">
-                <Users className="w-6 h-6 text-green-600" />
+              <div className="p-2 bg-cyan-100 rounded-lg">
+                <Users className="w-4 h-4 text-cyan-600 transform hover:scale-110 transition-transform duration-300" />
               </div>
-              <div className="ml-4">
-                <h3 className="text-2xl font-bold text-gray-900">{stats.totalUsers}</h3>
-                <p className="text-gray-600">Active Members</p>
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-gray-900">{stats.totalUsers}</h3>
+                <p className="text-sm text-gray-600">Active Members</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-blue-200 hover:shadow-md hover:scale-105 transition-all duration-300">
             <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <TrendingUp className="w-4 h-4 text-purple-600 transform hover:scale-110 transition-transform duration-300" />
               </div>
-              <div className="ml-4">
-                <h3 className="text-2xl font-bold text-gray-900">{stats.totalComments}</h3>
-                <p className="text-gray-600">Total Interactions</p>
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-gray-900">{stats.totalComments}</h3>
+                <p className="text-sm text-gray-600">Total Interactions</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Filters - Full Width Horizontal Layout */}
-        <PostFilters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onClearFilters={() => setFilters({
-            type: '',
-            category: '',
-            search: '',
-            sortBy: 'createdAt',
-            sortOrder: 'desc'
-          })}
-        />
+        {/* Filters */}
+        <div className="max-w-4xl mx-auto mb-6">
+          <PostFilters
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearFilters={() => setFilters({
+              type: '',
+              category: '',
+              search: '',
+              sortBy: 'createdAt',
+              sortOrder: 'desc'
+            })}
+          />
+        </div>
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto">
           {/* Create Post Button */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-6">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-blue-200 mb-6 hover:shadow-md hover:scale-105 transition-all duration-300">
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-md hover:from-blue-700 hover:to-cyan-700 hover:shadow-md transition-all duration-300 font-medium"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-5 h-5 transform hover:scale-110 transition-transform duration-300" />
               Share Your Knowledge
             </button>
           </div>
@@ -206,14 +213,14 @@ const Community = () => {
               </div>
             ) : posts.length === 0 ? (
               <div className="text-center py-12">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare className="w-8 h-8 text-gray-400" />
+                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-8 h-8 text-blue-400 transform hover:scale-110 transition-transform duration-300" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No posts yet</h3>
-                <p className="text-gray-600 mb-6">Be the first to share something with the community!</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
+                <p className="text-sm text-gray-600 mb-6">Be the first to share something with the community!</p>
                 <button
                   onClick={() => setIsCreateModalOpen(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-md hover:from-blue-700 hover:to-cyan-700 hover:shadow-md transition-all duration-300 font-medium"
                 >
                   Create First Post
                 </button>

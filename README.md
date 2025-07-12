@@ -2,9 +2,11 @@
 
 ## 🧠 Overview
 
-**Skill Swap** is a full-stack web application designed to build a community to exchange the skill. 
+**Skill Swap** is a full-stack web app that connects people through the power of shared skills.
+It’s a space where teaching earns you points, and learning costs nothing but curiosity.
 
-Whether you want to **offer** a skill, **request** one, or **redeem** points for learning — it all happens in a secure, user-friendly environment designed for growth.
+Whether you’re offering help or seeking it, every exchange builds trust and community.
+Grow, connect, and transform—one skill at a time, in a place made for mutual growth.
 
 ---
 
