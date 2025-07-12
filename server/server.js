@@ -12,6 +12,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const swapRoutes = require('./routes/swaps');
 const adminRoutes = require('./routes/admin');
+const postRoutes = require('./routes/posts');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/swaps', swapRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/posts', postRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

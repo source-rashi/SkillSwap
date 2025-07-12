@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import ProfileList from '../components/profile/ProfileList';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { Search, Filter, Users } from 'lucide-react';
+import { Search, Filter, Users, Eye, EyeOff } from 'lucide-react';
 
 const Browse = () => {
   const [users, setUsers] = useState([]);
@@ -20,6 +21,7 @@ const Browse = () => {
     total: 0
   });
   const toast = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchUsers();
@@ -87,6 +89,31 @@ const Browse = () => {
             Discover talented individuals ready to share their expertise and grow together
           </p>
         </div>
+
+        {/* Privacy Status Indicator */}
+        {user && (
+          <div className="mb-6">
+            <div className={`max-w-md mx-auto p-4 rounded-xl border ${
+              user.isPublic 
+                ? 'bg-green-50 border-green-200 text-green-800' 
+                : 'bg-orange-50 border-orange-200 text-orange-800'
+            }`}>
+              <div className="flex items-center justify-center">
+                {user.isPublic ? (
+                  <>
+                    <Eye className="w-5 h-5 mr-2" />
+                    <span className="font-medium">Your profile is public and visible to others</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="w-5 h-5 mr-2" />
+                    <span className="font-medium">Your profile is private and hidden from browse results</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">

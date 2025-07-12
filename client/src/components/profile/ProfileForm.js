@@ -318,15 +318,38 @@ const ProfileForm = () => {
       </div>
 
       {/* Privacy Settings */}
-      <div className="flex items-center">
-        <input
-          {...register('isPublic')}
-          type="checkbox"
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-        />
-        <label className="ml-2 block text-sm text-gray-700">
-          Make my profile public (others can find and contact me)
-        </label>
+      <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center mr-3">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          Privacy Settings
+        </h3>
+        
+        <div className="space-y-4">
+          <div className="flex items-start p-4 bg-white rounded-lg border border-gray-200">
+            <input
+              {...register('isPublic')}
+              type="checkbox"
+              className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5"
+            />
+            <div className="ml-3">
+              <label className="text-sm font-medium text-gray-900 cursor-pointer">
+                Make my profile public
+              </label>
+              <p className="text-sm text-gray-600 mt-1">
+                When enabled, others can find you in the browse section and send you skill swap requests.
+                When disabled, your profile will be private and only you can see it.
+              </p>
+            </div>
+          </div>
+          
+          <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <strong>Note:</strong> You can change your privacy settings at any time. Private profiles won't appear in search results or the browse skills section.
+          </div>
+        </div>
       </div>
 
       {/* Submit Button */}

@@ -61,9 +61,54 @@ const validateSwapRequest = (req, res, next) => {
   next();
 };
 
+const validatePost = (req, res, next) => {
+  const schema = Joi.object({
+    title: Joi.string().min(3).max(150).required(),
+    content: Joi.string().min(10).max(2000).required(),
+    type: Joi.string().valid('insight', 'problem', 'question', 'tip').required(),
+    category: Joi.string().max(50),
+    tags: Joi.array().items(Joi.string().max(30))
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ error: error.details[0].message });
+  }
+  next();
+};
+
+const validateComment = (req, res, next) => {
+  const schema = Joi.object({
+    content: Joi.string().min(1).max(500).required()
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ error: error.details[0].message });
+  }
+  next();
+};
+
+const validateSkillSwapRequest = (req, res, next) => {
+  const schema = Joi.object({
+    skillOffered: Joi.string().max(50).required(),
+    skillWanted: Joi.string().max(50).required(),
+    message: Joi.string().max(200)
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ error: error.details[0].message });
+  }
+  next();
+};
+
 module.exports = {
   validateRegister,
   validateLogin,
   validateProfile,
-  validateSwapRequest
+  validateSwapRequest,
+  validatePost,
+  validateComment,
+  validateSkillSwapRequest
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Users } from 'lucide-react';
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -36,6 +36,13 @@ const Header = () => {
                 >
                   <User className="w-4 h-4 mr-2 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-500" />
                   Browse Skills
+                </Link>
+                <Link
+                  to="/community"
+                  className="group text-gray-500 hover:text-purple-400 px-5 py-2 rounded-xl text-base font-medium flex items-center transition-all duration-500 ease-out hover:bg-purple-50/50 hover:shadow-md transform hover:-translate-y-0.5"
+                >
+                  <Users className="w-4 h-4 mr-2 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-500" />
+                  Community
                 </Link>
                 <Link
                   to="/requests"

@@ -15,6 +15,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Browse from './pages/Browse';
 import Requests from './pages/Requests';
+import Community from './pages/Community';
 import Admin from './pages/Admin';
 
 function App() {
@@ -55,6 +56,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Requests />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/community"
+                  element={
+                    <ProtectedRoute>
+                      <Community />
                     </ProtectedRoute>
                   }
                 />
