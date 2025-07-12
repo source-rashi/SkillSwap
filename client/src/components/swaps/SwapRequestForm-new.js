@@ -20,36 +20,14 @@ const SwapRequestForm = ({ recipient, onSuccess, onCancel }) => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      console.log('Sending swap request with data:', JSON.stringify(data, null, 2));
-      console.log('Recipient ID:', recipient._id);
-      const requestPayload = {
+      await api.post('/swaps', {
         ...data,
         recipient: recipient._id
-      };
-      console.log('Full request payload:', JSON.stringify(requestPayload, null, 2));
-      
-      const response = await api.post('/swaps', requestPayload);
-      console.log('✅ Swap request SUCCESS! Response:', response);
+      });
       toast.success('Swap request sent successfully!');
       onSuccess();
     } catch (error) {
-      console.error('❌ Swap request FAILED! Error details:', {
-        message: error.message,
-        error: error.error,
-        status: error.status,
-        data: error.data,
-        response: error.response,
-        fullError: error
-      });
-      
-      // Check if it's actually a success disguised as an error
-      if (error.response?.status === 201 || error.response?.status === 200) {
-        console.log('🎉 Actually successful! Server returned:', error.response.data);
-        toast.success('Swap request sent successfully!');
-        onSuccess();
-      } else {
-        toast.error(error.message || error.error || 'Failed to send swap request');
-      }
+      toast.error(error.message || 'Failed to send swap request');
     } finally {
       setIsLoading(false);
     }
