@@ -26,7 +26,8 @@ const LoginForm = () => {
       toast.success('Login successful!');
       navigate('/browse');
     } catch (error) {
-      toast.error(error.error || 'Login failed');
+      const errorMessage = error?.error || error?.message || 'Login failed';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

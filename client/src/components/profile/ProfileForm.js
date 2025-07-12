@@ -140,7 +140,8 @@ const ProfileForm = () => {
       toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Profile update error:', error);
-      toast.error(error.error || 'Failed to update profile');
+      const errorMessage = error?.error || error?.message || 'Failed to update profile';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

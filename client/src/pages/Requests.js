@@ -44,11 +44,12 @@ const Requests = () => {
 
   const handleRequestUpdate = async (requestId, status, rejectionReason = '') => {
     try {
-      await api.put(`/swaps/${requestId}`, { status, rejectionReason });
+      const response = await api.put(`/swaps/${requestId}`, { status, rejectionReason });
       toast.success(`Request ${status} successfully`);
       fetchRequests();
     } catch (error) {
-      toast.error(error.error || 'Failed to update request');
+      const errorMessage = error?.error || error?.message || 'Failed to update request';
+      toast.error(errorMessage);
     }
   };
 
@@ -58,7 +59,8 @@ const Requests = () => {
       toast.success('Request deleted successfully');
       fetchRequests();
     } catch (error) {
-      toast.error(error.error || 'Failed to delete request');
+      const errorMessage = error?.error || error?.message || 'Failed to delete request';
+      toast.error(errorMessage);
     }
   };
 
@@ -68,7 +70,8 @@ const Requests = () => {
       toast.success('Swap marked as completed');
       fetchRequests();
     } catch (error) {
-      toast.error(error.error || 'Failed to mark as completed');
+      const errorMessage = error?.error || error?.message || 'Failed to mark as completed';
+      toast.error(errorMessage);
     }
   };
 

@@ -69,7 +69,8 @@ const Community = () => {
       setIsCreateModalOpen(false);
       toast.success('Post created successfully!');
     } catch (error) {
-      toast.error(error.error || 'Failed to create post');
+      const errorMessage = error?.error || error?.message || 'Failed to create post';
+      toast.error(errorMessage);
     }
   };
 

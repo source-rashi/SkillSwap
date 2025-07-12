@@ -30,7 +30,8 @@ const RegisterForm = () => {
       toast.success('Registration successful!');
       navigate('/profile');
     } catch (error) {
-      toast.error(error.error || 'Registration failed');
+      const errorMessage = error?.error || error?.message || 'Registration failed';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

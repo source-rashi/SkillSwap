@@ -109,16 +109,31 @@ const getSwapRequests = async (req, res) => {
 
 const updateSwapRequest = async (req, res) => {
   try {
+    console.log('🔄 UpdateSwapRequest called with:', {
+      requestId: req.params.id,
+      userId: req.user._id,
+      body: req.body
+    });
+
     const { id } = req.params;
     const { status, rejectionReason } = req.body;
 
     const swapRequest = await SwapRequest.findById(id);
     if (!swapRequest) {
+      console.log('❌ Swap request not found:', id);
       return res.status(404).json({ error: 'Swap request not found' });
     }
 
+    console.log('📋 Found swap request:', {
+      id: swapRequest._id,
+      currentStatus: swapRequest.status,
+      recipient: swapRequest.recipient,
+      requester: swapRequest.requester
+    });
+
     // Only recipient can accept/reject
     if (swapRequest.recipient.toString() !== req.user._id.toString()) {
+      console.log('❌ Not authorized - User:', req.user._id, 'Recipient:', swapRequest.recipient);
       return res.status(403).json({ error: 'Not authorized to update this request' });
     }
 
@@ -130,13 +145,22 @@ const updateSwapRequest = async (req, res) => {
     }
 
     await swapRequest.save();
-    await swapRequest.populate(['requester', 'recipient'], 'name email skillsOffered skillsWanted');
+    console.log('✅ Swap request updated successfully to status:', status);
+    
+    await swapRequest.populate([
+      { path: 'requester', select: 'name email skillsOffered skillsWanted' },
+      { path: 'recipient', select: 'name email skillsOffered skillsWanted' }
+    ]);
 
-    res.json({
+    const response = {
       message: `Swap request ${status} successfully`,
       swapRequest
-    });
+    };
+    
+    console.log('📤 Sending response:', response);
+    res.json(response);
   } catch (error) {
+    console.error('💥 Error in updateSwapRequest:', error);
     res.status(500).json({ error: 'Failed to update swap request' });
   }
 };
