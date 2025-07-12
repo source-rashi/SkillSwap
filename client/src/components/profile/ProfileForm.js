@@ -15,6 +15,8 @@ const ProfileForm = () => {
   const [newSkillOffered, setNewSkillOffered] = useState('');
   const [newSkillWanted, setNewSkillWanted] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(user?.profilePicture || '');
 
   const {
     register,
@@ -34,6 +36,7 @@ const ProfileForm = () => {
       setValue('isPublic', user.isPublic !== false);
       setSkillsOffered(user.skillsOffered || []);
       setSkillsWanted(user.skillsWanted || []);
+      setPreviewUrl(user.profilePicture || '');
     }
   }, [user, setValue]);
 
@@ -48,8 +51,25 @@ const ProfileForm = () => {
       const response = await api.get('/users/locations', { params: { query } });
       setLocationSuggestions(response);
     } catch (error) {
-      // Fallback suggestions if API fails
       setLocationSuggestions([]);
+    }
+  };
+
+  const handleProfilePictureChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+        toast.error('Please upload a valid image (JPEG, PNG, or GIF)');
+        return;
+      }
+      // Validate file size (e.g., max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB');
+        return;
+      }
+      setProfilePicture(file);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -81,13 +101,22 @@ const ProfileForm = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const profileData = {
-        ...data,
-        skillsOffered,
-        skillsWanted
-      };
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('location', data.location);
+      formData.append('availability', data.availability);
+      formData.append('isPublic', data.isPublic);
+      formData.append('skillsOffered', JSON.stringify(skillsOffered));
+      formData.append('skillsWanted', JSON.stringify(skillsWanted));
+      if (profilePicture) {
+        formData.append('profilePicture', profilePicture);
+      }
 
-      const response = await api.put('/users/profile', profileData);
+      const response = await api.put('/users/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       updateUser(response.user);
       toast.success('Profile updated successfully!');
     } catch (error) {
@@ -99,6 +128,42 @@ const ProfileForm = () => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Profile Picture */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Profile Picture
+        </label>
+        <div className="flex items-center space-x-4">
+          <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt="Profile preview"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-gray-400">No Image</span>
+            )}
+          </div>
+          <div>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/gif"
+              onChange={handleProfilePictureChange}
+              className="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              JPEG, PNG, or GIF (Max 5MB)
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Basic Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
