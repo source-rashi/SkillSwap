@@ -8,7 +8,7 @@ It’s a space where teaching earns you points, and learning costs nothing but c
 Whether you’re offering help or seeking it, every exchange builds trust and community.
 Grow, connect, and transform—one skill at a time, in a place made for mutual growth.
 
----
+
 
 ## ✨ Features
 
@@ -52,7 +52,7 @@ Grow, connect, and transform—one skill at a time, in a place made for mutual�
 ### ⚙️ Settings & Preferences
 - Update profile details and manage user preferences
 
----
+
 
 ## 🧬 Unique Features
 
